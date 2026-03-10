@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>S&OP Portal Colaborativo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   PORTAL S&OP — Página SharePoint embebida
+   Funciona como Web Part de Embed / Script Editor en SharePoint
+   ═══════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#080e1a;--navy2:#0f1829;--navy3:#162038;--navy4:#1c2a47;
+  --cyan:#00e5cc;--cyan2:#00b8a3;--cyan-dim:rgba(0,229,204,.1);
+  --amber:#ffb347;--amber-dim:rgba(255,179,71,.1);
+  --green:#4ade80;--green-dim:rgba(74,222,128,.1);
+  --red:#ff4d6d;--red-dim:rgba(255,77,109,.1);
+  --violet:#a78bfa;
+  --text:#e8edf5;--muted:#6b7fa3;
+  --border:#1e2d4a;--border2:#243352;
+  --r:12px;--r2:18px;
+}
+body{background:var(--navy);font-family:'DM Sans',sans-serif;color:var(--text);
+  min-height:100vh;padding:0;}
+
+/* ── TOPBAR ─────────────────────────────────────────────── */
+.topbar{background:var(--navy2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;padding:0 20px;height:56px;
+  position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:9px;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;white-space:nowrap;}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.divider{width:1px;height:24px;background:var(--border);}
+.tabs{display:flex;gap:2px;flex:1;overflow-x:auto;}
+.tab{padding:7px 14px;border-radius:7px;border:none;background:none;
+  color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:.15s;white-space:nowrap;}
+.tab:hover{background:var(--navy3);color:var(--text);}
+.tab.on{background:var(--navy3);color:var(--cyan);font-weight:600;}
+.badge{background:var(--red);color:#fff;border-radius:20px;
+  padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px;display:none;}
+.topbar-r{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.user-chip{display:flex;align-items:center;gap:7px;padding:5px 10px;
+  background:var(--navy3);border-radius:7px;font-size:12px;}
+.rol-tag{font-size:9px;padding:2px 5px;border-radius:4px;font-weight:700;}
+.rol-PLANEADOR{background:rgba(255,179,71,.2);color:var(--amber);}
+.rol-KAM,.rol-KAE{background:var(--cyan-dim);color:var(--cyan);}
+.rol-GGV,.rol-DIR_VENTAS{background:rgba(167,139,250,.15);color:var(--violet);}
+.rol-DIR_CANAL{background:rgba(74,222,128,.1);color:var(--green);}
+.rol-CPFR{background:rgba(255,77,109,.1);color:var(--red);}
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+.wrap{display:flex;min-height:calc(100vh - 56px);}
+.sidebar{width:240px;min-width:240px;background:var(--navy2);
+  border-right:1px solid var(--border);padding:14px;overflow-y:auto;}
+.content{flex:1;padding:20px;overflow-y:auto;}
+
+/* ── SIDEBAR ────────────────────────────────────────────── */
+.sb-title{font-size:9px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding:0 4px;}
+.sb-section{margin-bottom:18px;}
+.fil-label{font-size:11px;color:var(--muted);padding:0 4px;margin-bottom:4px;display:block;}
+.chk-list{display:flex;flex-direction:column;gap:2px;}
+.chk-item{display:flex;align-items:center;gap:7px;padding:4px 8px;
+  border-radius:6px;cursor:pointer;font-size:12px;transition:.1s;}
+.chk-item:hover{background:var(--navy3);}
+.chk-item input{accent-color:var(--cyan);width:12px;height:12px;cursor:pointer;}
+.btn-fil{width:100%;background:var(--cyan);color:var(--navy);border:none;
+  border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;margin-top:6px;transition:.15s;}
+.btn-fil:hover{background:var(--cyan2);}
+
+.nota-pub{background:var(--amber-dim);border:1px solid rgba(255,179,71,.25);
+  border-radius:var(--r);padding:10px 12px;margin-bottom:14px;display:none;}
+.nota-pub-ttl{font-size:11px;font-weight:700;color:var(--amber);margin-bottom:3px;}
+.nota-pub-txt{font-size:12px;line-height:1.5;color:var(--text);}
+.nota-pub-meta{font-size:10px;color:var(--muted);margin-top:5px;}
+
+/* ── KPIs ───────────────────────────────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.kpi{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;}
+.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.kpi-val{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+.kpi.cyan .kpi-val{color:var(--cyan);}
+.kpi.amber .kpi-val{color:var(--amber);}
+.kpi.green .kpi-val{color:var(--green);}
+.kpi.red .kpi-val{color:var(--red);}
+
+/* ── SECTION HEADER ─────────────────────────────────────── */
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.sec-ttl{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;}
+.sec-sub{font-size:11px;color:var(--muted);}
+.ml{margin-left:auto;}
+.btn-sm{padding:5px 12px;border-radius:7px;border:1px solid var(--border2);
+  background:none;color:var(--text);font-size:11px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:.15s;white-space:nowrap;}
+.btn-sm:hover{background:var(--navy3);border-color:var(--cyan);color:var(--cyan);}
+.btn-sm.pri{background:var(--cyan);color:var(--navy);border-color:var(--cyan);font-weight:700;}
+.btn-sm.pri:hover{background:var(--cyan2);}
+.btn-sm.dng{border-color:rgba(255,77,109,.3);color:var(--red);}
+.btn-sm.dng:hover{background:var(--red-dim);}
+
+/* ── TABLE ──────────────────────────────────────────────── */
+.tbl-wrap{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;}
+.tbl-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--navy3);padding:9px 12px;font-size:10px;font-weight:700;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.5px;
+  white-space:nowrap;text-align:left;position:sticky;top:0;z-index:2;}
+th.num,td.num{text-align:right;}
+tbody tr{border-top:1px solid var(--border);transition:.1s;}
+tbody tr:hover{background:rgba(255,255,255,.02);}
+tbody tr.pend-row{background:rgba(255,179,71,.04);}
+td{padding:9px 12px;white-space:nowrap;}
+td.mono{font-family:'DM Mono',monospace;font-size:11px;}
+td.pos{color:var(--green);}
+td.neg{color:var(--red);}
+.badge-estado{display:inline-flex;align-items:center;gap:3px;
+  padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;}
+.be-pend{background:var(--amber-dim);color:var(--amber);}
+.be-aprov{background:var(--green-dim);color:var(--green);}
+.be-rech{background:var(--red-dim);color:var(--red);}
+.be-sin{background:rgba(107,127,163,.1);color:var(--muted);}
+.tag-reg{font-size:9px;color:var(--amber);margin-left:3px;}
+.cel-edit{cursor:pointer;color:var(--cyan);transition:.15s;}
+.cel-edit:hover{background:var(--cyan-dim);border-radius:4px;padding:2px 4px;}
+
+/* ── MODAL ──────────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.overlay.open{display:flex;}
+.modal{background:var(--navy2);border:1px solid var(--border2);border-radius:20px;
+  width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:28px;}
+.modal-ttl{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;margin-bottom:3px;}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.meta-box{background:var(--navy3);border-radius:9px;padding:11px 13px;}
+.meta-box label{font-size:9px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;display:block;margin-bottom:3px;}
+.meta-box .mv{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--cyan);}
+.meta-box .mv.bgt{color:var(--amber);}
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;
+  font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+.fg input,.fg textarea,.fg select{width:100%;background:var(--navy3);
+  border:1px solid var(--border);border-radius:9px;padding:9px 13px;
+  font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:.15s;}
+.fg input:focus,.fg textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,204,.08);}
+.fg textarea{resize:vertical;min-height:60px;}
+.delta-box{background:var(--navy3);border-radius:9px;padding:12px 14px;
+  margin-bottom:16px;display:none;}
+.delta-box .dlbl{font-size:11px;color:var(--muted);}
+.delta-val{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;margin-top:3px;}
+.dp{color:var(--green);}.dn{color:var(--red);}
+.reg-warn{background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.25);
+  border-radius:7px;padding:9px 11px;font-size:11px;color:var(--amber);
+  margin-bottom:14px;display:none;}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
+.btn-cancel{padding:9px 18px;border-radius:8px;border:1px solid var(--border2);
+  background:none;color:var(--muted);font-size:13px;cursor:pointer;}
+.btn-send{padding:9px 22px;border-radius:8px;border:none;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan2));
+  color:var(--navy);font-size:13px;font-weight:700;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;transition:.15s;}
+.btn-send:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(0,229,204,.22);}
+
+/* ── TOAST ──────────────────────────────────────────────── */
+#toast{position:fixed;bottom:20px;right:20px;z-index:999;
+  display:flex;flex-direction:column;gap:7px;pointer-events:none;}
+.ti{background:var(--navy3);border:1px solid var(--border2);border-radius:9px;
+  padding:10px 16px;font-size:12px;display:flex;align-items:center;gap:8px;
+  animation:sIn .2s ease;box-shadow:0 6px 28px rgba(0,0,0,.4);pointer-events:auto;}
+.ti.ok{border-left:3px solid var(--green);}
+.ti.err{border-left:3px solid var(--red);}
+@keyframes sIn{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
+@keyframes sOut{from{opacity:1}to{transform:translateX(110%);opacity:0}}
+
+/* ── PUBLISH PANEL ──────────────────────────────────────── */
+.pub-panel{background:var(--navy2);border:1px solid var(--border);
+  border-radius:var(--r2);padding:18px 20px;margin-bottom:16px;}
+.pub-panel h3{font-family:'Space Grotesk',sans-serif;font-size:13px;
+  font-weight:700;margin-bottom:12px;color:var(--amber);}
+.pub-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;}
+.pub-row select,.pub-row input{background:var(--navy3);border:1px solid var(--border);
+  border-radius:7px;padding:7px 11px;font-size:12px;color:var(--text);
+  font-family:'DM Sans',sans-serif;outline:none;}
+.pub-row select{width:90px;}
+.pub-row input{flex:1;min-width:200px;}
+
+/* ── ADMIN CARDS ────────────────────────────────────────── */
+.colabs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-bottom:20px;}
+.colab-card{background:var(--navy2);border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px;}
+.cc-rol{font-size:9px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}
+.cc-name{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;margin-bottom:10px;}
+.cc-btns{display:flex;gap:6px;margin-top:10px;}
+
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr);}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOPBAR ══════════════════════════════════════════════ -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">📊</div>
+    S&OP Portal
+  </div>
+  <div class="divider"></div>
+  <nav class="tabs">
+    <button class="tab on" onclick="switchTab('pvo',this)">Mi PVO</button>
+    <button class="tab" onclick="switchTab('colabs',this)">
+      Colaboraciones <span id="badge" class="badge">0</span>
+    </button>
+    <button class="tab" id="tab-admin-btn" onclick="switchTab('admin',this)" style="display:none">Panel Admin</button>
+  </nav>
+  <div class="topbar-r">
+    <div class="user-chip" id="user-chip">
+      <span id="user-name">Cargando...</span>
+      <span class="rol-tag" id="user-rol-tag"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN ════════════════════════════════════════════════ -->
+<div class="wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">Filtros</div>
+      <div id="fil-kams-wrap" style="display:none">
+        <span class="fil-label">KAM</span>
+        <div id="fil-kams" class="chk-list"></div>
+      </div>
+      <span class="fil-label" style="margin-top:8px;display:block">Dirección</span>
+      <span class="fil-label" style="margin-top:4px;display:block">Año</span>
+      <div id="fil-anios" class="chk-list"></div>
+      <span class="fil-label" style="margin-top:8px;display:block">Tipo de dato</span>
+      <div id="fil-origen" class="chk-list"></div>
+      <span class="fil-label" style="margin-top:4px;display:block">Año</span>
+      <div id="fil-anios" class="chk-list"></div>
+      <span class="fil-label" style="margin-top:8px;display:block">Tipo de dato</span>
+      <div id="fil-origen" class="chk-list"></div>
+      <span class="fil-label" style="margin-top:8px;display:block">Dirección</span>
+      <div id="fil-dirs" class="chk-list"></div>
+      <span class="fil-label" style="margin-top:8px;display:block">Categoría</span>
+      <div id="fil-cats" class="chk-list"></div>
+      <button class="btn-fil" onclick="renderPVO()">Aplicar filtros</button>
+    </div>
+    <div class="sb-section" id="nota-sidebar" style="display:none">
+      <div class="sb-title">Base activa</div>
+      <div id="nota-sb-content" style="font-size:11px;line-height:1.6;color:var(--muted);"></div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- TAB: PVO -->
+    <div id="tab-pvo">
+      <div id="nota-pub" class="nota-pub">
+        <div class="nota-pub-ttl" id="nota-ttl"></div>
+        <div class="nota-pub-txt" id="nota-txt"></div>
+        <div class="nota-pub-meta" id="nota-meta"></div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi cyan"><div class="kpi-lbl">Total PVO (Tons)</div>
+          <div class="kpi-val" id="kpi-total">—</div>
+          <div class="kpi-sub" id="kpi-meses">—</div></div>
+        <div class="kpi amber"><div class="kpi-lbl">BGT Anual</div>
+          <div class="kpi-val" id="kpi-bgt">—</div>
+          <div class="kpi-sub">presupuesto</div></div>
+        <div class="kpi" id="kpi-var-box"><div class="kpi-lbl">Var vs BGT</div>
+          <div class="kpi-val" id="kpi-var">—</div>
+          <div class="kpi-sub">toneladas</div></div>
+        <div class="kpi"><div class="kpi-lbl">Clientes</div>
+          <div class="kpi-val" id="kpi-cli">—</div>
+          <div class="kpi-sub" id="kpi-reg">— regionales</div></div>
+      </div>
+
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-ttl">Volumen por Cliente · Categoría</div>
+          <div class="sec-sub" id="pvo-sub">Clic en toneladas del mes para colaborar</div>
+        </div>
+        <div class="ml" style="display:flex;gap:6px;">
+          <button class="btn-sm" onclick="exportCSV()">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <div class="tbl-scroll">
+          <table id="pvo-table">
+            <thead id="pvo-head"></thead>
+            <tbody id="pvo-body"><tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">Cargando datos...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: COLABORACIONES -->
+    <div id="tab-colabs" style="display:none">
+      <div class="kpis">
+        <div class="kpi amber"><div class="kpi-lbl">Pendientes</div>
+          <div class="kpi-val" id="ck-pend">—</div><div class="kpi-sub">por revisar</div></div>
+        <div class="kpi green"><div class="kpi-lbl">Aprobadas</div>
+          <div class="kpi-val" id="ck-aprov">—</div><div class="kpi-sub">aceptadas</div></div>
+        <div class="kpi red"><div class="kpi-lbl">Rechazadas</div>
+          <div class="kpi-val" id="ck-rech">—</div><div class="kpi-sub">con motivo</div></div>
+        <div class="kpi cyan"><div class="kpi-lbl">Delta pendiente</div>
+          <div class="kpi-val" id="ck-delta">—</div><div class="kpi-sub">tons netas</div></div>
+      </div>
+
+      <div class="sec-hdr">
+        <div class="sec-ttl">Historial de Colaboraciones</div>
+        <div class="ml" style="display:flex;gap:6px;align-items:center;">
+          <select id="fil-estado" onchange="renderColabs()"
+            style="background:var(--navy3);border:1px solid var(--border);border-radius:7px;
+            padding:5px 10px;color:var(--text);font-size:11px;font-family:'DM Sans',sans-serif;">
+            <option value="">Todos</option>
+            <option value="PENDIENTE">Pendientes</option>
+            <option value="APROBADA">Aprobadas</option>
+            <option value="RECHAZADA">Rechazadas</option>
+          </select>
+          <button class="btn-sm pri" id="btn-export-colabs" onclick="exportColabsCSV()" style="display:none">⬇ Exportar</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr>
+              <th>Cliente</th><th>Categoría</th><th>Mes</th>
+              <th class="num">Base T</th><th class="num">Nuevo T</th>
+              <th class="num">Δ Tons</th><th class="num">Δ %</th>
+              <th>Por</th><th>Fecha</th><th>Estado</th><th>Comentario</th>
+              <th id="th-accion" style="text-align:center;display:none">Acción</th>
+            </tr></thead>
+            <tbody id="colab-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: ADMIN -->
+    <div id="tab-admin" style="display:none">
+      <!-- Publicar base -->
+      <div class="pub-panel">
+        <h3>📢 Publicar base para colaboración</h3>
+        <div class="pub-row">
+          <select id="pub-mes">
+            <option value="">Mes...</option>
+            <option value="3">MAR</option><option value="4">ABR</option>
+            <option value="5">MAY</option><option value="6">JUN</option>
+            <option value="7">JUL</option><option value="8">AGO</option>
+          </select>
+          <input type="text" id="pub-msg" placeholder="Mensaje e instrucciones para los KAMs...">
+          <input type="date" id="pub-fecha" style="width:140px;" title="Fecha límite">
+          <button class="btn-sm pri" onclick="publicarBase()">Publicar</button>
+        </div>
+      </div>
+
+      <!-- Por colaborador -->
+      <div class="sec-hdr">
+        <div class="sec-ttl">Estado por colaborador</div>
+        <div class="ml"><button class="btn-sm" onclick="renderAdmin()">↺ Actualizar</button></div>
+      </div>
+      <div id="admin-grid" class="colabs-grid"></div>
+
+      <!-- Acciones masivas -->
+      <div class="sec-hdr" style="margin-top:4px">
+        <div class="sec-ttl">Acciones masivas</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-sm pri" onclick="resolverGrupo(null,'APROBAR')">✓ Aprobar TODAS las pendientes</button>
+        <button class="btn-sm dng" onclick="resolverGrupo(null,'RECHAZAR')">✗ Rechazar TODAS</button>
+        <button class="btn-sm" onclick="exportColabsCSV()">⬇ Exportar colaboraciones</button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /wrap -->
+
+<!-- ═══ MODAL COLABORAR ══════════════════════════════════════ -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-ttl" id="m-ttl">Colaborar volumen</div>
+    <div class="modal-sub" id="m-sub"></div>
+    <div class="reg-warn" id="m-reg">⚑ Cliente con colaboración territorial</div>
+    <div class="meta-grid">
+      <div class="meta-box"><label>Tons base (PVO)</label><div class="mv" id="m-base">—</div></div>
+      <div class="meta-box"><label>BGT anual</label><div class="mv bgt" id="m-bgt">—</div></div>
+      <div class="meta-box"><label>Mes</label><div class="mv" id="m-mes">—</div></div>
+      <div class="meta-box"><label>Categoría</label><div class="mv" id="m-cat" style="font-size:11px">—</div></div>
+    </div>
+    <div class="fg">
+      <label>Nuevo volumen (Tons)</label>
+      <input type="number" id="m-nuevo" step="0.001" min="0" oninput="calcDelta()">
+    </div>
+    <div class="delta-box" id="m-delta-box">
+      <div class="dlbl">Diferencia vs base</div>
+      <div class="delta-val" id="m-delta">—</div>
+    </div>
+    <div class="fg">
+      <label>Comentario / Justificación</label>
+      <textarea id="m-comentario" placeholder="Ej: Catalogación nueva, acuerdo comercial, variación de rotación..."></textarea>
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;">
+        <input type="checkbox" id="m-mkt" style="accent-color:var(--violet);">
+        <span style="font-size:12px;">Es colaboración de <strong style="color:var(--violet)">Marketing</strong></span>
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-send" onclick="enviarColab()">Enviar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL RECHAZAR ═══════════════════════════════════════ -->
+<div class="overlay" id="rj-overlay">
+  <div class="modal" style="width:400px">
+    <div class="modal-ttl">Rechazar colaboración</div>
+    <div class="modal-sub">El KAM verá este motivo</div>
+    <div class="fg"><label>Motivo</label>
+      <textarea id="rj-motivo" rows="3" placeholder="Ej: El volumen supera la capacidad disponible..."></textarea></div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeRJ()">Cancelar</button>
+      <button class="btn-send" style="background:linear-gradient(135deg,var(--red),#c0392b);color:#fff;"
+        onclick="confirmarRechazo()">Rechazar →</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ═══ SCRIPT ═══════════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONFIGURACIÓN — Cambia estas URLs cuando tengas las listas
+// de SharePoint creadas
+// ══════════════════════════════════════════════════════════════
+const SP_SITE     = 'https://sanchezymartinsadecv.sharepoint.com/sites/PVOColaboracin';
+const LIST_PVO    = 'PVO_Base';
+const LIST_COLABS = 'Colaboraciones';
+const LIST_NOTAS  = 'Notas_Publicacion';
+const LIST_ROLES  = 'Roles_Usuarios';
+
+const MES_NOM  = {3:'MAR',4:'ABR',5:'MAY',6:'JUN',7:'JUL',8:'AGO',9:'SEP',10:'OCT',11:'NOV',12:'DIC'};
+const REGIONALES = ['CASA CHAPA','CONSUMO Z','DECASA','DICONSA',
+                    'DIST. EL TORO','DUERO','DYLASA','GRUPO GARIS','SAHUAYO'];
+
+// ── ESTADO GLOBAL ─────────────────────────────────────────────
+let G = {
+  usuario:    '',
+  nombre:     '',
+  email:      '',
+  rol:        'KAM',
+  filtro_val: null,
+  pvo:        [],       // todos los datos PVO de esta sesión
+  colabs:     [],       // colaboraciones
+  notas:      {},
+  editCtx:    {},
+  rejectId:   null,
+};
+
+// ══════════════════════════════════════════════════════════════
+// SHAREPOINT REST API
+// ══════════════════════════════════════════════════════════════
+async function spGet(list, filter='', select='') {
+  let url = `${SP_SITE}/_api/web/lists/getbytitle('${list}')/items?$top=5000`;
+  if(filter) url += `&$filter=${encodeURIComponent(filter)}`;
+  if(select) url += `&$select=${encodeURIComponent(select)}`;
+  const r = await fetch(url, { headers: { Accept: 'application/json;odata=nometadata' } });
+  if(!r.ok) throw new Error(`SP GET ${list}: ${r.status}`);
+  const d = await r.json();
+  return d.value;
+}
+
+async function spGetDigest() {
+  const r = await fetch(`${SP_SITE}/_api/contextinfo`, {
+    method: 'POST',
+    headers: { Accept: 'application/json;odata=nometadata' }
+  });
+  const d = await r.json();
+  return d.FormDigestValue;
+}
+
+async function spPost(list, item) {
+  const digest = await spGetDigest();
+  const r = await fetch(
+    `${SP_SITE}/_api/web/lists/getbytitle('${list}')/items`,
+    {
+      method: 'POST',
+      headers: {
+        Accept:          'application/json;odata=nometadata',
+        'Content-Type':  'application/json;odata=nometadata',
+        'X-RequestDigest': digest,
+      },
+      body: JSON.stringify(item),
+    }
+  );
+  if(!r.ok) throw new Error(`SP POST ${list}: ${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+async function spPatch(list, itemId, item) {
+  const digest = await spGetDigest();
+  const r = await fetch(
+    `${SP_SITE}/_api/web/lists/getbytitle('${list}')/items(${itemId})`,
+    {
+      method: 'PATCH',
+      headers: {
+        Accept:            'application/json;odata=nometadata',
+        'Content-Type':    'application/json;odata=nometadata',
+        'X-RequestDigest': digest,
+        'IF-MATCH':        '*',
+        'X-HTTP-Method':   'MERGE',
+      },
+      body: JSON.stringify(item),
+    }
+  );
+  if(!r.ok) throw new Error(`SP PATCH ${list}(${itemId}): ${r.status}`);
+  return true;
+}
+
+// ══════════════════════════════════════════════════════════════
+// USUARIO ACTUAL (desde Azure AD / SharePoint)
+// ══════════════════════════════════════════════════════════════
+async function cargarUsuario() {
+  // Obtener email del usuario actual desde SharePoint
+  const r = await fetch(`${SP_SITE}/_api/web/currentuser`,
+    { headers: { Accept: 'application/json;odata=nometadata' } });
+  const u = await r.json();
+  G.email  = (u.Email || '').toLowerCase();
+  G.nombre = u.Title || G.email;
+
+  // Buscar su rol en la lista Roles_Usuarios
+  const roles = await spGet(LIST_ROLES, `Email_Corporativo eq '${G.email}'`);
+  if(roles.length > 0) {
+    const rol_entry = roles[0];
+    G.rol        = rol_entry.Rol        || 'KAM';
+    G.filtro_val = rol_entry.Filtro_Valor || null;
+    G.nombre     = rol_entry.Nombre      || G.nombre;
+  } else {
+    // Si no está en la lista de roles, solo lectura
+    G.rol = 'LECTURA';
+  }
+
+  // Actualizar UI
+  document.getElementById('user-name').textContent = G.nombre.replace('KAM/ ','');
+  const tag = document.getElementById('user-rol-tag');
+  const label = {
+    PLANEADOR:'Planeación',GGV:'GGV',DIR_VENTAS:'Dir. Ventas',
+    DIR_CANAL:'Dir. Canal',KAM:'KAM',KAE:'KAE',CPFR:'CPFR',LECTURA:'Lectura'
+  }[G.rol] || G.rol;
+  tag.textContent = label;
+  tag.className   = `rol-tag rol-${G.rol}`;
+
+  // Mostrar tab admin solo para planeador
+  if(puedeAprobar()) {
+    document.getElementById('tab-admin-btn').style.display = '';
+    document.getElementById('btn-export-colabs').style.display = '';
+    document.getElementById('th-accion').style.display = '';
+  }
+}
+
+const puedeAprobar   = () => G.rol === 'PLANEADOR';
+const puedeColaborar = () => ['KAM','KAE','CPFR'].includes(G.rol);
+const veTodo         = () => ['PLANEADOR','GGV','DIR_VENTAS'].includes(G.rol);
+
+// ══════════════════════════════════════════════════════════════
+// CARGA DE DATOS
+// ══════════════════════════════════════════════════════════════
+async function cargarPVO() {
+  let filter = '';
+  if(!veTodo() && G.filtro_val) {
+    if(G.rol === 'KAM' || G.rol === 'KAE')
+      filter = `KAM eq '${G.filtro_val}'`;
+    else if(G.rol === 'CPFR')
+      filter = `CPFR eq '${G.filtro_val}'`;
+    else if(G.rol === 'DIR_CANAL')
+      filter = `Direccion eq '${G.filtro_val}'`;
+  }
+  G.pvo = await spGet(LIST_PVO, filter);
+}
+
+async function cargarColabs() {
+  let filter = '';
+  if(!puedeAprobar())
+    filter = `Colaboracion_Por eq '${G.email}'`;
+  G.colabs = await spGet(LIST_COLABS, filter);
+  actualizarBadge();
+}
+
+async function cargarNotas() {
+  const notas = await spGet(LIST_NOTAS);
+  G.notas = {};
+  notas.forEach(n => { G.notas[n.Mes] = n; });
+  mostrarNota();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER — PVO TABLE
+// ══════════════════════════════════════════════════════════════
+function renderPVO() {
+  // Filtros UI
+  const catSel    = getChecked('fil-cats');
+  const dirSel    = getChecked('fil-dirs');
+  const kamSel    = getChecked('fil-kams');
+  const anioSel   = getChecked('fil-anios');
+  const origenSel = getChecked('fil-origen');
+
+  let rows = G.pvo;
+  if(catSel.length)    rows = rows.filter(r => catSel.includes(r.Categoria));
+  if(dirSel.length)    rows = rows.filter(r => dirSel.includes(r.Direccion));
+  if(kamSel.length)    rows = rows.filter(r => kamSel.includes(r.KAM));
+  if(anioSel.length)   rows = rows.filter(r => anioSel.includes(String(r.Anio)));
+  if(origenSel.length) rows = rows.filter(r => origenSel.includes(r.Origen));
+
+  // Agrupar por Cliente+Categoria (pivot de meses)
+  const map = new Map();
+  rows.forEach(r => {
+    const key = `${r.Anio}|||${r.Origen}|||${r.Cliente}|||${r.Categoria}`;
+    if(!map.has(key)) map.set(key, {
+      Anio: r.Anio||2026, Origen: r.Origen||'PVO',
+      Cliente: r.Cliente, Categoria: r.Categoria,
+      Direccion: r.Direccion, KAM: r.KAM, KAE: r.KAE,
+      Es_Regional: r.Es_Regional,
+      meses: {}, bgt: 0, tiene_pend: false, sp_ids: {}
+    });
+    const e = map.get(key);
+    e.meses[r.Mes]  = (e.meses[r.Mes]||0) + (r.Tons || r.Tons_PVO || 0);
+    if(r.Anio===2026 || !r.Anio) e.bgt += r.Tons_BGT || 0;
+    e.sp_ids[r.Mes] = r.Id;
+    if(r.Colaboracion_Estado === 'PENDIENTE') e.tiene_pend = true;
+  });
+
+  const meses = [...new Set(rows.map(r=>r.Mes))].sort((a,b)=>a-b);
+  const data  = [...map.values()];
+
+  // KPIs
+  const totalPVO = data.reduce((s,r) => s + Object.values(r.meses).reduce((a,b)=>a+b,0), 0);
+  const totalBGT = data.reduce((s,r) => s + r.bgt, 0);
+  const varTons  = totalPVO - totalBGT;
+  const nReg     = data.filter(r => r.Es_Regional==='Sí').length;
+  document.getElementById('kpi-total').textContent = totalPVO.toLocaleString('es-MX',{maximumFractionDigits:0});
+  document.getElementById('kpi-bgt').textContent   = totalBGT.toLocaleString('es-MX',{maximumFractionDigits:0});
+  document.getElementById('kpi-var').textContent   = (varTons>=0?'+':'')+varTons.toLocaleString('es-MX',{maximumFractionDigits:0});
+  document.getElementById('kpi-var-box').className = 'kpi '+(varTons>=0?'green':'red');
+  document.getElementById('kpi-cli').textContent   = data.length;
+  document.getElementById('kpi-reg').textContent   = `${nReg} regionales`;
+  const aniosVis = [...new Set(data.map(r=>r.Anio))].sort();
+  document.getElementById('kpi-meses').textContent = `${aniosVis.join(' · ')} · ${meses.map(m=>MES_NOM[m]||m).join(' ')}`;
+
+  // Filtros sidebar
+  buildCheckboxes('fil-anios',  [...new Set(G.pvo.map(r=>String(r.Anio)))].sort().reverse(), 'anio');
+  buildCheckboxes('fil-origen', [...new Set(G.pvo.map(r=>r.Origen||'PVO'))].sort(), 'origen');
+  buildCheckboxes('fil-dirs',   [...new Set(G.pvo.map(r=>r.Direccion))].sort(), 'dir');
+  buildCheckboxes('fil-cats',   [...new Set(G.pvo.map(r=>r.Categoria))].sort(), 'cat');
+  if(veTodo()) {
+    buildCheckboxes('fil-kams', [...new Set(G.pvo.map(r=>r.KAM))].sort(), 'kam');
+    document.getElementById('fil-kams-wrap').style.display = '';
+  }
+
+  // Header
+  let hdr = `<tr><th>Año</th><th>Tipo</th><th>Cliente</th><th>Categoría</th>`;
+  if(veTodo()) hdr += `<th>KAM</th>`;
+  meses.forEach(m => hdr += `<th class="num">${MES_NOM[m]||m}</th>`);
+  hdr += `<th class="num">TOTAL</th><th class="num">BGT</th><th class="num">Var%</th></tr>`;
+  document.getElementById('pvo-head').innerHTML = hdr;
+
+  // Rows
+  const tbody = document.getElementById('pvo-body');
+  if(!data.length) {
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--muted)">Sin datos para los filtros seleccionados</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(row => {
+    const total   = Object.values(row.meses).reduce((a,b)=>a+b,0);
+    const varPct  = row.bgt > 0 ? ((total/row.bgt-1)*100).toFixed(1) : '0.0';
+    const isPos   = parseFloat(varPct) >= 0;
+        const origenColor = row.Origen==='REAL' ? 'var(--green)' : row.Origen==='PVO' ? 'var(--cyan)' : 'var(--amber)';
+    const canColab = puedeColaborar() && (row.Anio===2026||!row.Anio) && row.Origen!=='REAL';
+    let cells = `<td class="mono" style="font-size:11px;color:var(--muted)">${row.Anio||2026}</td>
+      <td><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;
+        background:${origenColor}22;color:${origenColor}">${row.Origen||'PVO'}</span></td>
+      <td>${row.Cliente}${row.Es_Regional==='Sí'?'<span class="tag-reg">⚑</span>':''}</td>
+      <td style="font-size:11px">${row.Categoria}</td>`;
+    if(veTodo()) cells += `<td style="font-size:10px;color:var(--muted)">${(row.KAM||'').replace('KAM/ ','')}</td>`;
+    meses.forEach(m => {
+      const v = row.meses[m] || 0;
+      const spId = row.sp_ids[m];
+      const clickable = canColab && spId;
+      cells += `<td class="num mono${clickable?' cel-edit':''}"
+        ${clickable ? `onclick="abrirModal('${row.Cliente.replace(/'/g,"\\'")}','${row.Categoria}',${m},${v},${row.bgt},${spId})"` : ''}>
+        ${v > 0 ? v.toFixed(1) : '—'}</td>`;
+    });
+    cells += `<td class="num mono" style="font-weight:600">${total.toFixed(1)}</td>
+      <td class="num mono" style="color:var(--amber)">${row.bgt.toFixed(1)}</td>
+      <td class="num ${isPos?'pos':'neg'}">${isPos?'+':''}${varPct}%</td>`;
+    return `<tr class="${row.tiene_pend?'pend-row':''}">${cells}</tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER — COLABORACIONES
+// ══════════════════════════════════════════════════════════════
+function renderColabs() {
+  const estado = document.getElementById('fil-estado').value;
+  let data = G.colabs;
+  if(estado) data = data.filter(c => c.Estado === estado);
+  data = [...data].sort((a,b) => (b.Fecha_Envio||'').localeCompare(a.Fecha_Envio||''));
+
+  // KPIs
+  const pend  = G.colabs.filter(c=>c.Estado==='PENDIENTE');
+  const aprov = G.colabs.filter(c=>c.Estado==='APROBADA');
+  const rech  = G.colabs.filter(c=>c.Estado==='RECHAZADA');
+  const delta = pend.reduce((s,c)=>s+(c.Delta_Tons||0),0);
+  document.getElementById('ck-pend').textContent  = pend.length;
+  document.getElementById('ck-aprov').textContent = aprov.length;
+  document.getElementById('ck-rech').textContent  = rech.length;
+  document.getElementById('ck-delta').textContent = (delta>=0?'+':'')+delta.toFixed(1);
+
+  const tbody = document.getElementById('colab-body');
+  if(!data.length) {
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--muted)">Sin colaboraciones</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(c => {
+    const badge = c.Estado==='PENDIENTE'
+      ? `<span class="badge-estado be-pend">⏳ Pendiente</span>`
+      : c.Estado==='APROBADA'
+      ? `<span class="badge-estado be-aprov">✓ Aprobada</span>`
+      : `<span class="badge-estado be-rech">✗ Rechazada</span>`;
+    const d    = c.Delta_Tons || 0;
+    const dPct = c.Delta_Pct != null ? (c.Delta_Pct>=0?'+':'')+c.Delta_Pct+'%' : '—';
+    const actions = puedeAprobar() && c.Estado==='PENDIENTE' ? `
+      <div style="display:flex;gap:4px">
+        <button class="btn-sm pri" onclick="resolverItem(${c.Id},'APROBAR')">✓</button>
+        <button class="btn-sm dng" onclick="abrirRechazo(${c.Id})">✗</button>
+      </div>` : '';
+    return `<tr>
+      <td>${c.Cliente||''}${(c.Es_Regional==='Sí')?'<span class="tag-reg">⚑</span>':''}</td>
+      <td style="font-size:10px">${c.Categoria||''}</td>
+      <td><span class="badge-estado be-pend" style="background:var(--cyan-dim);color:var(--cyan)">${MES_NOM[c.Mes]||c.Mes}</span></td>
+      <td class="num mono">${(c.Tons_Base||0).toFixed(1)}</td>
+      <td class="num mono">${(c.Tons_Nuevo||0).toFixed(1)}</td>
+      <td class="num mono ${d>=0?'pos':'neg'}">${d>=0?'+':''}${d.toFixed(1)}</td>
+      <td class="num ${d>=0?'pos':'neg'}">${dPct}</td>
+      <td style="font-size:10px;color:var(--muted)">${(c.Colaboracion_Por||'').split('@')[0]}</td>
+      <td style="font-size:10px;color:var(--muted)">${(c.Fecha_Envio||'').substring(0,10)}</td>
+      <td>${badge}</td>
+      <td style="font-size:10px;color:var(--muted);max-width:140px;white-space:normal">${c.Comentario||c.Motivo_Rechazo||''}</td>
+      ${puedeAprobar()?`<td style="text-align:center">${actions}</td>`:''}
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER — ADMIN
+// ══════════════════════════════════════════════════════════════
+function renderAdmin() {
+  const pend  = G.colabs.filter(c=>c.Estado==='PENDIENTE');
+  const byUser = {};
+  pend.forEach(c => {
+    const k = c.Colaboracion_Por || '?';
+    if(!byUser[k]) byUser[k] = {n:0,delta:0,nombre:c.Kam_Nombre||k};
+    byUser[k].n++; byUser[k].delta += c.Delta_Tons||0;
+  });
+  const grid = document.getElementById('admin-grid');
+  const users = Object.entries(byUser).sort((a,b)=>b[1].n-a[1].n);
+  if(!users.length) {
+    grid.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:20px 0">✓ Sin colaboraciones pendientes</div>`;
+    return;
+  }
+  grid.innerHTML = users.map(([email,u])=>`
+    <div class="colab-card">
+      <div class="cc-rol">Colaborador</div>
+      <div class="cc-name">${u.nombre.replace('KAM/ ','')}</div>
+      <span class="badge-estado be-pend">⏳ ${u.n} pendiente${u.n!==1?'s':''}</span>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">
+        Delta: ${u.delta>=0?'+':''}${u.delta.toFixed(1)} T
+      </div>
+      <div class="cc-btns">
+        <button class="btn-sm pri" style="flex:1" onclick="resolverGrupo('${email}','APROBAR')">✓ Aprobar</button>
+        <button class="btn-sm dng" style="flex:1" onclick="resolverGrupo('${email}','RECHAZAR')">✗ Rechazar</button>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODAL COLABORAR
+// ══════════════════════════════════════════════════════════════
+function abrirModal(cliente, categoria, mes, tonsBase, bgt, spId) {
+  if(!puedeColaborar()) { toast('Tu rol es de solo lectura','err'); return; }
+  G.editCtx = {cliente, categoria, mes, tonsBase, bgt, spId};
+  document.getElementById('m-ttl').textContent  = cliente;
+  document.getElementById('m-sub').textContent  = categoria;
+  document.getElementById('m-base').textContent = tonsBase.toFixed(3)+' T';
+  document.getElementById('m-bgt').textContent  = bgt.toFixed(1)+' T';
+  document.getElementById('m-mes').textContent  = MES_NOM[mes]||mes;
+  document.getElementById('m-cat').textContent  = categoria;
+  document.getElementById('m-nuevo').value      = tonsBase.toFixed(3);
+  document.getElementById('m-comentario').value = '';
+  document.getElementById('m-mkt').checked      = false;
+  document.getElementById('m-delta-box').style.display = 'none';
+  document.getElementById('m-reg').style.display = REGIONALES.includes(cliente)?'block':'none';
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('m-nuevo').focus();
+}
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+
+function calcDelta(){
+  const nuevo = parseFloat(document.getElementById('m-nuevo').value)||0;
+  const base  = G.editCtx.tonsBase||0;
+  const delta = nuevo - base;
+  const box   = document.getElementById('m-delta-box');
+  const val   = document.getElementById('m-delta');
+  box.style.display = 'block';
+  const pct = base>0 ? ` (${(delta/base*100).toFixed(1)}%)` : '';
+  val.textContent = (delta>=0?'+':'')+delta.toFixed(3)+' T'+pct;
+  val.className   = 'delta-val '+(delta>=0?'dp':'dn');
+}
+
+async function enviarColab(){
+  const nuevo = parseFloat(document.getElementById('m-nuevo').value);
+  if(isNaN(nuevo)||nuevo<0){ toast('Ingresa un volumen válido','err'); return; }
+  const ctx  = G.editCtx;
+  const delta = nuevo - ctx.tonsBase;
+  if(Math.abs(delta)<0.001){ toast('Sin cambio respecto a la base','err'); return; }
+
+  const colab = {
+    Fecha_Envio:     new Date().toISOString(),
+    Anio:            2026,
+    Mes:             ctx.mes,
+    Mes_Nombre:      MES_NOM[ctx.mes]||String(ctx.mes),
+    Cliente:         ctx.cliente,
+    Categoria:       ctx.categoria,
+    Es_Regional:     REGIONALES.includes(ctx.cliente)?'Sí':'No',
+    Tons_Base:       parseFloat(ctx.tonsBase.toFixed(3)),
+    Tons_Nuevo:      parseFloat(nuevo.toFixed(3)),
+    Delta_Tons:      parseFloat(delta.toFixed(4)),
+    Delta_Pct:       ctx.tonsBase>0 ? parseFloat((delta/ctx.tonsBase*100).toFixed(1)) : null,
+    Comentario:      document.getElementById('m-comentario').value.substring(0,500),
+    Tipo1:           document.getElementById('m-mkt').checked ? 'COLABORACION/MARCAS' : 'COLABORACION',
+    Colaboracion_Por: G.email,
+    Kam_Nombre:      G.nombre,
+    Estado:          'PENDIENTE',
+    Fecha_Resolucion: null,
+    Resuelto_Por:    '',
+    Motivo_Rechazo:  '',
+  };
+
+  try {
+    await spPost(LIST_COLABS, colab);
+    // Actualizar estado en PVO_Base
+    if(ctx.spId) {
+      await spPatch(LIST_PVO, ctx.spId, {
+        Colaboracion_Estado:     'PENDIENTE',
+        Colaboracion_Tons:       nuevo,
+        Colaboracion_Comentario: colab.Comentario,
+        Colaboracion_Fecha:      new Date().toISOString(),
+        Colaboracion_Por:        G.email,
+      });
+    }
+    toast(`${ctx.cliente} · ${ctx.categoria} · ${MES_NOM[ctx.mes]}: ${delta>=0?'+':''}${delta.toFixed(1)} T enviado ✓`,'ok');
+    closeModal();
+    await cargarColabs();
+    await cargarPVO();
+    renderPVO();
+  } catch(e){
+    toast('Error al enviar: '+e.message,'err');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// APROBAR / RECHAZAR
+// ══════════════════════════════════════════════════════════════
+async function resolverItem(id, accion, motivo=''){
+  try {
+    await spPatch(LIST_COLABS, id, {
+      Estado:           accion==='APROBAR'?'APROBADA':'RECHAZADA',
+      Fecha_Resolucion: new Date().toISOString(),
+      Resuelto_Por:     G.email,
+      Motivo_Rechazo:   motivo,
+    });
+    toast(`Colaboración ${accion==='APROBAR'?'aprobada':'rechazada'} ✓`,'ok');
+    await cargarColabs();
+    renderColabs();
+    renderAdmin();
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+function abrirRechazo(id){ G.rejectId=id; document.getElementById('rj-motivo').value=''; document.getElementById('rj-overlay').classList.add('open'); }
+function closeRJ(){ document.getElementById('rj-overlay').classList.remove('open'); }
+async function confirmarRechazo(){
+  const m = document.getElementById('rj-motivo').value;
+  await resolverItem(G.rejectId,'RECHAZAR',m);
+  closeRJ();
+}
+
+async function resolverGrupo(email, accion){
+  const pend = G.colabs.filter(c => c.Estado==='PENDIENTE' && (!email || c.Colaboracion_Por===email));
+  if(!pend.length){ toast('Sin colaboraciones pendientes','err'); return; }
+  let motivo = '';
+  if(accion==='RECHAZAR') motivo = prompt('Motivo del rechazo (opcional):') || '';
+  for(const c of pend) await resolverItem(c.Id, accion, motivo);
+  toast(`${pend.length} colaboraciones ${accion==='APROBAR'?'aprobadas':'rechazadas'} ✓`,'ok');
+}
+
+// ══════════════════════════════════════════════════════════════
+// PUBLICAR BASE (admin)
+// ══════════════════════════════════════════════════════════════
+async function publicarBase(){
+  const mes    = parseInt(document.getElementById('pub-mes').value);
+  const msg    = document.getElementById('pub-msg').value;
+  const limite = document.getElementById('pub-fecha').value;
+  if(!mes){ toast('Selecciona un mes','err'); return; }
+  try {
+    await spPost(LIST_NOTAS, {
+      Mes:          mes,
+      Mes_Nombre:   MES_NOM[mes]||String(mes),
+      Mensaje:      msg,
+      Fecha_Limite: limite,
+      Publicado_Por: G.email,
+      Fecha:        new Date().toISOString(),
+    });
+    toast(`Base ${MES_NOM[mes]} publicada ✓ — los KAMs ya pueden colaborar`,'ok');
+    await cargarNotas();
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+function mostrarNota(){
+  const keys = Object.keys(G.notas);
+  if(!keys.length) return;
+  const last = G.notas[keys[keys.length-1]];
+  document.getElementById('nota-pub').style.display = 'block';
+  document.getElementById('nota-ttl').textContent   = `📢 Base ${last.Mes_Nombre||''} publicada`;
+  document.getElementById('nota-txt').textContent   = last.Mensaje||'';
+  document.getElementById('nota-meta').textContent  =
+    `${(last.Publicado_Por||'').split('@')[0]} · ${(last.Fecha||'').substring(0,10)}`+
+    (last.Fecha_Limite ? ` · Límite: ${last.Fecha_Limite}` : '');
+  document.getElementById('nota-sidebar').style.display = 'block';
+  document.getElementById('nota-sb-content').innerHTML =
+    `<span style="color:var(--amber);font-weight:600">${last.Mes_Nombre}</span><br>${last.Mensaje||''}`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+function switchTab(id, btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  ['pvo','colabs','admin'].forEach(t=>{ const el=document.getElementById('tab-'+t); if(el) el.style.display='none'; });
+  if(btn) btn.classList.add('on');
+  document.getElementById('tab-'+id).style.display='';
+  if(id==='colabs') renderColabs();
+  if(id==='admin')  renderAdmin();
+}
+
+function buildCheckboxes(containerId, items, cls){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = items.filter(Boolean).map(v=>`
+    <label class="chk-item">
+      <input type="checkbox" class="fil-${cls}" value="${v}" checked>
+      <span>${v.replace('KAM/ ','').replace('DIR. ','')}</span>
+    </label>`).join('');
+}
+
+function getChecked(cls){
+  return [...document.querySelectorAll(`.${cls}:checked`)].map(x=>x.value);
+}
+
+function actualizarBadge(){
+  const n = G.colabs.filter(c=>c.Estado==='PENDIENTE' && (puedeAprobar() || c.Colaboracion_Por===G.email)).length;
+  const b = document.getElementById('badge');
+  b.textContent = n; b.style.display = n>0?'':'none';
+}
+
+function toast(msg, type='ok'){
+  const t = document.createElement('div');
+  t.className = 'ti '+(type==='ok'?'ok':'err');
+  t.textContent = (type==='ok'?'✓ ':'⚠ ')+msg;
+  document.getElementById('toast').appendChild(t);
+  setTimeout(()=>{ t.style.animation='sOut .2s ease forwards'; setTimeout(()=>t.remove(),200); },3500);
+}
+
+function exportCSV(){
+  const rows = G.pvo;
+  if(!rows.length){ toast('Sin datos para exportar','err'); return; }
+  const cols = ['Cliente','Categoria','Direccion','KAM','KAE','Mes','Tons_PVO','Tons_BGT'];
+  const csv  = [cols.join(','), ...rows.map(r=>cols.map(c=>`"${r[c]||''}"`).join(','))].join('\n');
+  descargar(csv,'PVO_Export.csv','text/csv');
+}
+
+function exportColabsCSV(){
+  if(!G.colabs.length){ toast('Sin colaboraciones','err'); return; }
+  const cols = ['Fecha_Envio','Cliente','Categoria','Mes_Nombre','Tons_Base','Tons_Nuevo',
+                'Delta_Tons','Delta_Pct','Comentario','Tipo1','Colaboracion_Por','Estado',
+                'Fecha_Resolucion','Resuelto_Por','Motivo_Rechazo'];
+  const csv  = [cols.join(','), ...G.colabs.map(r=>cols.map(c=>`"${r[c]||''}"`).join(','))].join('\n');
+  descargar(csv,'Colaboraciones_Export.csv','text/csv');
+}
+
+function descargar(content, filename, mime){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+content],{type:mime}));
+  a.download = filename; a.click();
+}
+
+// Cerrar modales con Escape o clic fuera
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+document.getElementById('rj-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeRJ();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeRJ();}});
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+async function init(){
+  try {
+    await cargarUsuario();
+    await Promise.all([cargarPVO(), cargarColabs(), cargarNotas()]);
+    renderPVO();
+    setInterval(async()=>{ await cargarColabs(); actualizarBadge(); }, 60000);
+  } catch(e){
+    toast('Error al cargar datos: '+e.message+'. Verifica que las listas de SharePoint existen.','err');
+    console.error(e);
+  }
+}
+init();
+</script>
+</body>
+</html>
